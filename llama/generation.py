@@ -80,38 +80,55 @@ class Llama:
             and loads the pre-trained model and tokenizer.
 
         """
+        
+        ################################### init Pytorch Distribute by GPU #################################
+        
+        # 配置Pytorch的分布式通信规则为NCCL（专用于GPU分布式）
         if not torch.distributed.is_initialized():
             torch.distributed.init_process_group("nccl")
+        
+        # 配置Pytorch的模型并行数（default=1）
         if not model_parallel_is_initialized():
             if model_parallel_size is None:
                 model_parallel_size = int(os.environ.get("WORLD_SIZE", 1))
             initialize_model_parallel(model_parallel_size)
 
+        # 设置Pytorch使用的显卡
         local_rank = int(os.environ.get("LOCAL_RANK", 0))
         torch.cuda.set_device(local_rank)
 
-        # seed must be the same in all processes
+        # seed must be the same in all processes（设置程序的随机种子）
         torch.manual_seed(1)
 
         if local_rank > 0:
             sys.stdout = open(os.devnull, "w")
 
+        ############################################ End init #############################################
+
         start_time = time.time()
+        
+        # 读取路径下所有Pytorch模型（由于模型并行，因此checkpoint可能分为多个）
         checkpoints = sorted(Path(ckpt_dir).glob("*.pth"))
         assert len(checkpoints) > 0, f"no checkpoint files found in {ckpt_dir}"
         assert model_parallel_size == len(
             checkpoints
         ), f"Loading a checkpoint for MP={len(checkpoints)} but world size is {model_parallel_size}"
+        
+        # 读取当前机器使用的checkpoint模型所在路径
         ckpt_path = checkpoints[get_model_parallel_rank()]
-        checkpoint = torch.load(ckpt_path, map_location="cpu")
+        
+        # 从磁盘加载checkpoint模型及params
+        checkpoint = torch.load(ckpt_path, map_location="cpu")      # 可能是反序列化到CPU有进一步的操作
         with open(Path(ckpt_dir) / "params.json", "r") as f:
             params = json.loads(f.read())
 
+        # 记录模型的必要参数
         model_args: ModelArgs = ModelArgs(
             max_seq_len=max_seq_len,
             max_batch_size=max_batch_size,
             **params,
         )
+        
         tokenizer = Tokenizer(model_path=tokenizer_path)
         model_args.vocab_size = tokenizer.n_words
         torch.set_default_tensor_type(torch.cuda.HalfTensor)

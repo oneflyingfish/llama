@@ -36,23 +36,8 @@ def main(
         max_batch_size=max_batch_size,
     )
 
-    prompts: List[str] = [
-        # For these prompts, the expected answer is the natural continuation of the prompt
-        "I believe the meaning of life is",
-        "Simply put, the theory of relativity states that ",
-        """A brief message congratulating the team on the launch:
+    prompts: List[str] = ["I like apple, and","hello, I am"]
 
-        Hi everyone,
-        
-        I just """,
-        # Few shot prompt (providing a few examples before asking model to complete more);
-        """Translate English to French:
-        
-        sea otter => loutre de mer
-        peppermint => menthe poivrée
-        plush girafe => girafe peluche
-        cheese =>""",
-    ]
     results = generator.text_completion(
         prompts,
         max_gen_len=max_gen_len,
