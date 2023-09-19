@@ -18,11 +18,11 @@ class Tokenizer:
         Initializes the Tokenizer with a SentencePiece model.
 
         Args:
-            model_path (str): The path to the SentencePiece model file.
+            model_path (str): The path to the SentencePiece model file.             # "llama-models/tokenizer.model"
         """
         # reload tokenizer
         assert os.path.isfile(model_path), model_path
-        self.sp_model = SentencePieceProcessor(model_file=model_path)
+        self.sp_model = SentencePieceProcessor(model_file=model_path)               # SentencePieceProcessor 训练的分词器模型
         logger.info(f"Reloaded SentencePiece model from {model_path}")
 
         # BOS / EOS token IDs
