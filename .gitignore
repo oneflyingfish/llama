@@ -1,5 +1,7 @@
+
 llama-models/llama-2-7b-chat*
 llama-models/tokenizer*
+models
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
